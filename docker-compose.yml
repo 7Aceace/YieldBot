@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  yieldbot:
+    build: .
+    restart: unless-stopped
+    environment:
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - DISCORD_CHANNEL_ID=${DISCORD_CHANNEL_ID}
+      - RPC_URL=${RPC_URL}
+      - REWARDS_MANAGER_ADDRESS=${REWARDS_MANAGER_ADDRESS}
+      - SLVLUSD_ADDRESS=${SLVLUSD_ADDRESS}
+      - CHAIN_ID=${CHAIN_ID:-1}
+      - BLOCK_CONFIRMATIONS=${BLOCK_CONFIRMATIONS:-3}
+      - POLL_INTERVAL=${POLL_INTERVAL:-30}
+    volumes:
+      - ./logs:/app/logs
+    env_file:
+      - .env
