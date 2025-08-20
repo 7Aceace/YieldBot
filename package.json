@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/index.js",
     "test": "node src/test.js",
-    "test-block": "node src/test-block.js"
+    "test-block": "node src/test-block.js",
+    "test-block-discord": "node src/test-block-with-discord.js"
   },
   "dependencies": {
     "viem": "^2.21.1",

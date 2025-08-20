@@ -64,29 +64,29 @@ YieldBot/
 ### **Option 1: Viem Version (Recommended)**
 
 #### **1. Install Dependencies**
-```bash
+   ```bash
 npm install
-```
+   ```
 
 #### **2. Configure Environment**
-```bash
+   ```bash
 cp .env.example .env
-```
+   ```
 
 Edit `.env` with your values:
-```env
-# Discord Bot Configuration
-DISCORD_BOT_TOKEN=your_discord_bot_token_here
-DISCORD_CHANNEL_ID=your_channel_id_here
+   ```env
+   # Discord Bot Configuration
+   DISCORD_BOT_TOKEN=your_discord_bot_token_here
+   DISCORD_CHANNEL_ID=your_channel_id_here
 
-# Blockchain Configuration
-RPC_URL=https://your-rpc-endpoint.com
+   # Blockchain Configuration
+   RPC_URL=https://your-rpc-endpoint.com
 REWARDS_MANAGER_ADDRESS=0xBD05B8B22fE4ccf093a6206C63Cc39f02345E0DA
 SLVLUSD_ADDRESS=your_slvlusd_address_here
 
-# Network Configuration
+   # Network Configuration
 CHAIN_ID=1
-BLOCK_CONFIRMATIONS=3
+   BLOCK_CONFIRMATIONS=3
 POLL_INTERVAL=30
 ```
 
@@ -112,15 +112,15 @@ pip install -r requirements.txt
 ```
 
 #### **2. Configure Environment**
-```bash
+   ```bash
 cp config.example.env .env
 # Edit .env with your values (same format as above)
-```
+   ```
 
 #### **3. Start the Bot**
-```bash
-python main.py
-```
+   ```bash
+   python main.py
+   ```
 
 ## 🔧 **Discord Bot Setup**
 

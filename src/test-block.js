@@ -10,7 +10,7 @@ import { BlockchainMonitor } from './blockchain-monitor.js';
 async function testSpecificBlock(blockNumber) {
   try {
     console.log('🧪 YieldBot Block Testing Tool');
-    console.log('=' * 50);
+    console.log('='.repeat(50));
     
     // Validate configuration
     validateConfig();
@@ -30,23 +30,23 @@ async function testSpecificBlock(blockNumber) {
     }
     
     // Test specific block
-    console.log(`\\n🔍 Testing block ${blockNumber}...`);
+    console.log(`\n🔍 Testing block ${blockNumber}...`);
     console.log('-'.repeat(40));
     
     const startTime = Date.now();
     const distributions = await monitor.processBlock(BigInt(blockNumber));
     const duration = Date.now() - startTime;
     
-    console.log(`\\n📈 Results for block ${blockNumber}:`);
+    console.log(`\n📈 Results for block ${blockNumber}:`);
     console.log(`⏱️ Processing time: ${duration}ms`);
     console.log(`📊 Yield distributions found: ${distributions.length}`);
     
     if (distributions.length > 0) {
-      console.log('\\n🎯 DETECTED YIELD DISTRIBUTIONS:');
-      console.log('=' * 50);
+      console.log('\n🎯 DETECTED YIELD DISTRIBUTIONS:');
+      console.log('='.repeat(50));
       
       distributions.forEach((dist, index) => {
-        console.log(`\\n${index + 1}. Transaction: ${dist.transactionHash}`);
+        console.log(`\n${index + 1}. Transaction: ${dist.transactionHash}`);
         console.log(`   💰 Amount: ${dist.amount}`);
         console.log(`   📦 Block: ${dist.blockNumber}`);
         console.log(`   🏷️ Type: ${dist.transactionType}`);
@@ -64,17 +64,45 @@ async function testSpecificBlock(blockNumber) {
         }
       });
       
-      console.log('\\n🎉 SUCCESS: Found yield distributions in this block!');
+      // Send Discord notifications for detected distributions
+      console.log('\n📱 Testing Discord notifications...');
+      try {
+        await bot.start();
+        console.log('✅ Connected to Discord');
+        
+        // Wait for connection to stabilize
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Send notification for first distribution
+        if (distributions.length > 0) {
+          console.log('📤 Sending test Discord notification...');
+          const success = await bot.sendYieldNotification(distributions[0]);
+          if (success) {
+            console.log('✅ Discord notification sent successfully!');
+          } else {
+            console.log('❌ Failed to send Discord notification');
+          }
+        }
+        
+        // Clean up
+        await bot.stop();
+        console.log('🔌 Discord connection closed');
+        
+      } catch (error) {
+        console.warn(`⚠️ Discord test failed: ${error.message}`);
+      }
+      
+      console.log('\n🎉 SUCCESS: Found yield distributions and tested Discord!');
     } else {
-      console.log('\\n📭 No yield distributions found in this block.');
-      console.log('\\n💡 This could mean:');
+      console.log('\n📭 No yield distributions found in this block.');
+      console.log('\n💡 This could mean:');
       console.log('   - No yield distribution transactions occurred in this block');
       console.log('   - The transactions were not to the target contract');
       console.log('   - The method ID 0x6a761202 was not called');
       console.log('   - No Rewarded events were emitted');
     }
     
-    console.log('\\n🔍 Block Analysis Complete!');
+    console.log('\n🔍 Block Analysis Complete!');
     
   } catch (error) {
     console.error(`💥 Error testing block: ${error.message}`);
@@ -89,12 +117,12 @@ if (!blockNumber) {
   console.error('❌ Please provide a block number');
   console.log('📋 Usage: node src/test-block.js [blockNumber]');
   console.log('📋 Example: node src/test-block.js 23174914');
-  console.log('\\n🔗 You can find block numbers on Etherscan:');
+  console.log('\n🔗 You can find block numbers on Etherscan:');
   console.log('   https://etherscan.io/address/0xBD05B8B22fE4ccf093a6206C63Cc39f02345E0DA#events');
   process.exit(1);
 }
 
-if (!/^\\d+$/.test(blockNumber)) {
+if (!/^\d+$/.test(blockNumber)) {
   console.error('❌ Block number must be a valid integer');
   process.exit(1);
 }

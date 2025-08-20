@@ -38,14 +38,22 @@ export class BlockchainMonitor {
   }
   
   isYieldDistributionTransaction(tx) {
-    if (!tx.to) return false;
+    if (!tx.to || !tx.input) return false;
     
+    const methodId = tx.input.slice(0, 10); // First 4 bytes (0x + 8 chars)
+    
+    // Check if method ID matches 0x6a761202 (regardless of target contract)
+    // This catches both direct calls and proxy/multicall patterns
+    if (methodId === config.YIELD_DISTRIBUTION_METHOD) {
+      return true;
+    }
+    
+    // Original logic: direct calls to RewardsManager
     const toAddress = tx.to.toLowerCase();
     const rewardsManager = config.REWARDS_MANAGER_ADDRESS.toLowerCase();
     
-    if (toAddress === rewardsManager && tx.input) {
-      const methodId = tx.input.slice(0, 10); // First 4 bytes (0x + 8 chars)
-      return methodId === config.YIELD_DISTRIBUTION_METHOD;
+    if (toAddress === rewardsManager && methodId === config.YIELD_DISTRIBUTION_METHOD) {
+      return true;
     }
     
     return false;
@@ -107,11 +115,22 @@ export class BlockchainMonitor {
             
             // Extract amount from data
             if (log.data && log.data !== '0x') {
-              const amountWei = BigInt(log.data);
+              // Extract amount from the last 32 bytes of data (standard for uint256)
+              let amountWei;
+              if (log.data.length >= 66) { // 0x + 64 chars
+                const lastBytes = '0x' + log.data.slice(-64);
+                amountWei = BigInt(lastBytes);
+              } else {
+                amountWei = BigInt(log.data);
+              }
               
-              // Format amount based on asset
+              // Smart amount formatting
               let amountDisplay;
-              if (assetAddress && assetAddress.toLowerCase() === config.USDC_ADDRESS.toLowerCase()) {
+              
+              // Check if the data contains USDC address (indicates USDC transfer)
+              const dataContainsUSDC = log.data.toLowerCase().includes(config.USDC_ADDRESS.slice(2).toLowerCase());
+              
+              if (dataContainsUSDC || (assetAddress && assetAddress.toLowerCase() === config.USDC_ADDRESS.toLowerCase())) {
                 // USDC has 6 decimals
                 const amountFormatted = formatUnits(amountWei, 6);
                 amountDisplay = `${parseFloat(amountFormatted).toLocaleString('en-US', {
@@ -119,7 +138,7 @@ export class BlockchainMonitor {
                   maximumFractionDigits: 2
                 })} USDC`;
               } else {
-                // Default to 18 decimals
+                // Default to 18 decimals for other tokens
                 const amountFormatted = formatUnits(amountWei, 18);
                 amountDisplay = `${amountFormatted} tokens`;
               }
@@ -200,6 +219,7 @@ export class BlockchainMonitor {
       const block = await this.getBlock(blockNumber);
       
       for (const tx of block.transactions) {
+        
         if (this.isYieldDistributionTransaction(tx)) {
           console.log(`🎯 Found yield distribution transaction: ${tx.hash}`);
           const receipt = await this.getTransactionReceipt(tx.hash);
@@ -227,6 +247,11 @@ export class BlockchainMonitor {
           }
         }
       }
+      
+      if (yieldDistributions.length > 0) {
+        console.log(`✅ Found ${yieldDistributions.length} yield distribution(s) in block ${blockNumber}`);
+      }
+      
     } catch (error) {
       console.error(`❌ Error processing block ${blockNumber}: ${error.message}`);
     }
