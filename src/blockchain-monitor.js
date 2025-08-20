@@ -1,0 +1,306 @@
+import { createPublicClient, http, parseAbiItem, formatUnits, keccak256, toHex } from 'viem';
+import { mainnet } from 'viem/chains';
+import { config } from './config.js';
+
+export class BlockchainMonitor {
+  constructor() {
+    this.client = createPublicClient({
+      chain: mainnet,
+      transport: http(config.RPC_URL)
+    });
+    
+    this.lastProcessedBlock = null;
+    
+    // Calculate Rewarded event signature
+    this.rewardedEventSignature = keccak256(toHex('Rewarded(address,address,uint256)'));
+    console.log(`📊 Calculated Rewarded event signature: ${this.rewardedEventSignature}`);
+    
+    // Event signatures
+    this.eventSignatures = {
+      Transfer: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+      Rewarded: this.rewardedEventSignature
+    };
+  }
+  
+  async getLatestBlock() {
+    return await this.client.getBlockNumber();
+  }
+  
+  async getBlock(blockNumber) {
+    return await this.client.getBlock({
+      blockNumber: BigInt(blockNumber),
+      includeTransactions: true
+    });
+  }
+  
+  async getTransactionReceipt(txHash) {
+    return await this.client.getTransactionReceipt({ hash: txHash });
+  }
+  
+  isYieldDistributionTransaction(tx) {
+    if (!tx.to) return false;
+    
+    const toAddress = tx.to.toLowerCase();
+    const rewardsManager = config.REWARDS_MANAGER_ADDRESS.toLowerCase();
+    
+    if (toAddress === rewardsManager && tx.input) {
+      const methodId = tx.input.slice(0, 10); // First 4 bytes (0x + 8 chars)
+      return methodId === config.YIELD_DISTRIBUTION_METHOD;
+    }
+    
+    return false;
+  }
+  
+  analyzeTransactionLogs(receipt) {
+    const result = {
+      isYieldDistribution: false,
+      amount: null,
+      events: [],
+      transactionType: null,
+      involvesRewardsManager: false,
+      involvesSlvlusd: false
+    };
+    
+    if (!receipt || !receipt.logs) {
+      return result;
+    }
+    
+    for (const log of receipt.logs) {
+      const logAddress = log.address.toLowerCase();
+      const rewardsManager = config.REWARDS_MANAGER_ADDRESS.toLowerCase();
+      const slvlusd = config.SLVLUSD_ADDRESS?.toLowerCase();
+      
+      // Track contract involvement
+      if (logAddress === rewardsManager) {
+        result.involvesRewardsManager = true;
+      } else if (slvlusd && logAddress === slvlusd) {
+        result.involvesSlvlusd = true;
+      }
+      
+      // Skip logs not from target contracts
+      if (logAddress !== rewardsManager && logAddress !== slvlusd) {
+        continue;
+      }
+      
+      if (log.topics && log.topics.length > 0) {
+        const eventSignature = log.topics[0];
+        
+        // Check for Rewarded event
+        if (eventSignature === this.eventSignatures.Rewarded) {
+          try {
+            // Rewarded(address asset, address to, uint256 amount)
+            // Topics: [signature, asset, recipient]
+            // Data: amount
+            
+            let assetAddress = null;
+            let recipientAddress = null;
+            
+            if (log.topics.length >= 2) {
+              assetAddress = '0x' + log.topics[1].slice(-40); // Last 20 bytes
+              console.log(`🎯 Rewarded event - Asset: ${assetAddress}`);
+            }
+            
+            if (log.topics.length >= 3) {
+              recipientAddress = '0x' + log.topics[2].slice(-40); // Last 20 bytes
+              console.log(`🎯 Rewarded event - Recipient: ${recipientAddress}`);
+            }
+            
+            // Extract amount from data
+            if (log.data && log.data !== '0x') {
+              const amountWei = BigInt(log.data);
+              
+              // Format amount based on asset
+              let amountDisplay;
+              if (assetAddress && assetAddress.toLowerCase() === config.USDC_ADDRESS.toLowerCase()) {
+                // USDC has 6 decimals
+                const amountFormatted = formatUnits(amountWei, 6);
+                amountDisplay = `${parseFloat(amountFormatted).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })} USDC`;
+              } else {
+                // Default to 18 decimals
+                const amountFormatted = formatUnits(amountWei, 18);
+                amountDisplay = `${amountFormatted} tokens`;
+              }
+              
+              result.isYieldDistribution = true;
+              result.amount = amountDisplay;
+              result.events.push({
+                type: 'Rewarded',
+                amount: amountDisplay,
+                amountRaw: amountWei.toString(),
+                address: logAddress,
+                signature: eventSignature,
+                asset: assetAddress,
+                recipient: recipientAddress
+              });
+              
+              console.log(`✅ Found Rewarded event with amount: ${amountDisplay}`);
+            }
+          } catch (error) {
+            console.error(`❌ Error decoding Rewarded event: ${error.message}`);
+          }
+        }
+        
+        // Check for Transfer events
+        else if (eventSignature === this.eventSignatures.Transfer) {
+          try {
+            if (log.data && log.data !== '0x') {
+              const amountWei = BigInt(log.data);
+              
+              // Format based on contract
+              let amountDisplay;
+              if (logAddress === config.USDC_ADDRESS.toLowerCase()) {
+                const amountFormatted = formatUnits(amountWei, 6);
+                amountDisplay = `${parseFloat(amountFormatted).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })} USDC`;
+              } else {
+                const amountFormatted = formatUnits(amountWei, 18);
+                amountDisplay = `${amountFormatted} tokens`;
+              }
+              
+              result.isYieldDistribution = true;
+              result.amount = amountDisplay;
+              result.events.push({
+                type: 'Transfer',
+                amount: amountDisplay,
+                amountRaw: amountWei.toString(),
+                address: logAddress
+              });
+              
+              console.log(`💸 Found Transfer event with amount: ${amountDisplay}`);
+            }
+          } catch (error) {
+            console.error(`❌ Error decoding Transfer event: ${error.message}`);
+          }
+        }
+      }
+    }
+    
+    // Determine transaction type
+    if (result.involvesRewardsManager) {
+      result.transactionType = 'yield_distribution_call';
+      result.isYieldDistribution = true;
+    } else if (result.involvesSlvlusd) {
+      result.transactionType = 'slvlusd_interaction';
+      result.isYieldDistribution = true;
+    }
+    
+    return result;
+  }
+  
+  async processBlock(blockNumber) {
+    const yieldDistributions = [];
+    
+    try {
+      console.log(`🔍 Processing block ${blockNumber}...`);
+      const block = await this.getBlock(blockNumber);
+      
+      for (const tx of block.transactions) {
+        if (this.isYieldDistributionTransaction(tx)) {
+          console.log(`🎯 Found yield distribution transaction: ${tx.hash}`);
+          const receipt = await this.getTransactionReceipt(tx.hash);
+          
+          if (receipt) {
+            const analysis = this.analyzeTransactionLogs(receipt);
+            
+            if (analysis.isYieldDistribution) {
+              const yieldDistribution = {
+                transactionHash: tx.hash,
+                blockNumber: Number(blockNumber),
+                fromAddress: tx.from,
+                toAddress: tx.to,
+                amount: analysis.amount || 'Unknown',
+                events: analysis.events || [],
+                gasUsed: receipt.gasUsed?.toString() || '0',
+                transactionType: analysis.transactionType || 'unknown',
+                involvesRewardsManager: analysis.involvesRewardsManager,
+                involvesSlvlusd: analysis.involvesSlvlusd
+              };
+              
+              yieldDistributions.push(yieldDistribution);
+              console.log(`✅ Yield distribution detected in block ${blockNumber}: ${tx.hash}`);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`❌ Error processing block ${blockNumber}: ${error.message}`);
+    }
+    
+    return yieldDistributions;
+  }
+  
+  async startMonitoring(startBlock = null) {
+    if (startBlock === null) {
+      startBlock = await this.getLatestBlock();
+    }
+    
+    this.lastProcessedBlock = startBlock - BigInt(1);
+    console.log(`🚀 Starting blockchain monitoring from block ${startBlock}`);
+    
+    const monitor = async () => {
+      try {
+        const latestBlock = await this.getLatestBlock();
+        
+        if (latestBlock > this.lastProcessedBlock) {
+          const confirmedBlock = latestBlock - BigInt(config.BLOCK_CONFIRMATIONS);
+          
+          if (confirmedBlock > this.lastProcessedBlock) {
+            for (let blockNum = this.lastProcessedBlock + BigInt(1); blockNum <= confirmedBlock; blockNum++) {
+              const distributions = await this.processBlock(blockNum);
+              
+              for (const distribution of distributions) {
+                // Emit event for each distribution
+                this.emit('yieldDistribution', distribution);
+              }
+            }
+            
+            this.lastProcessedBlock = confirmedBlock;
+          }
+        }
+      } catch (error) {
+        console.error(`❌ Error in monitoring loop: ${error.message}`);
+      }
+      
+      setTimeout(monitor, config.POLL_INTERVAL * 1000);
+    };
+    
+    monitor();
+  }
+  
+  // Simple event emitter
+  emit(event, data) {
+    if (this.listeners && this.listeners[event]) {
+      this.listeners[event].forEach(callback => callback(data));
+    }
+  }
+  
+  on(event, callback) {
+    if (!this.listeners) this.listeners = {};
+    if (!this.listeners[event]) this.listeners[event] = [];
+    this.listeners[event].push(callback);
+  }
+  
+  async getStatus() {
+    try {
+      const latestBlock = await this.getLatestBlock();
+      return {
+        connected: true,
+        chainId: config.CHAIN_ID,
+        latestBlock: Number(latestBlock),
+        lastProcessedBlock: this.lastProcessedBlock ? Number(this.lastProcessedBlock) : null,
+        rewardsManagerAddress: config.REWARDS_MANAGER_ADDRESS,
+        slvlusdAddress: config.SLVLUSD_ADDRESS
+      };
+    } catch (error) {
+      return {
+        connected: false,
+        error: error.message
+      };
+    }
+  }
+}

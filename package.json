@@ -1,0 +1,33 @@
+{
+  "name": "yieldbot-viem",
+  "version": "1.0.0",
+  "description": "Discord bot for monitoring Rewarded events using Viem",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node src/test.js",
+    "test-block": "node src/test-block.js"
+  },
+  "dependencies": {
+    "viem": "^2.21.1",
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "ethereum",
+    "discord",
+    "blockchain",
+    "yield",
+    "viem",
+    "monitoring"
+  ],
+  "author": "YieldBot",
+  "license": "MIT"
+}

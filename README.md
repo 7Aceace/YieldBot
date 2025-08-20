@@ -1,259 +1,315 @@
-# YieldBot 🤖
+# 🤖 YieldBot - Discord Yield Distribution Monitor
 
-A Discord bot that monitors blockchain transactions for yield distributions and posts notifications to your Discord server when the RewardsManager contract emits Rewarded events (method ID: 0x6a761202).
+A Discord bot that monitors the RewardsManager contract for yield distributions and sends real-time notifications to your Discord server.
 
-## Features
+## 🎯 **What It Does**
 
-- 🔍 **Real-time Monitoring**: Continuously monitors blockchain for yield distribution transactions
-- 💬 **Discord Notifications**: Sends rich embedded messages to Discord when yield is distributed
-- 🛡️ **Robust Error Handling**: Comprehensive error handling and logging
-- ⚙️ **Configurable**: Easy configuration via environment variables
-- 🧪 **Testing Tools**: Built-in testing utilities to verify setup
-- 📊 **Event Analysis**: Analyzes transaction logs to identify yield distribution events
+YieldBot monitors the Ethereum blockchain for yield distribution events on the RewardsManager contract:
 
-## Architecture
+- **Contract**: `0xBD05B8B22fE4ccf093a6206C63Cc39f02345E0DA`
+- **Method**: `0x6a761202` (reward function calls)
+- **Event**: `Rewarded(address asset, address to, uint256 amount)`
 
-The bot consists of several components:
+When the protocol treasury multisig calls `reward` on the RewardsManager to distribute yield, YieldBot instantly detects it and sends a beautiful Discord notification with the yield amount.
 
-1. **Discord Bot** (`discord_bot.py`): Handles Discord connectivity and message posting
-2. **Blockchain Monitor** (`blockchain_monitor.py`): Monitors blockchain for yield distribution events
-3. **Configuration** (`config.py`): Manages environment variables and settings
-4. **Main Service** (`main.py`): Orchestrates the bot and monitor
-5. **Utilities** (`utils.py`): Testing and validation tools
+## ✨ **Features**
 
-## Setup
+- 🔍 **Real-time Monitoring**: Continuous blockchain monitoring with 30-second polling
+- 💬 **Rich Discord Notifications**: Beautiful embeds with yield amounts, transaction links, and details
+- 🎯 **Accurate Detection**: Specifically monitors method ID `0x6a761202` and `Rewarded` events
+- 💰 **Smart Amount Formatting**: Automatically formats USDC (6 decimals) vs ETH (18 decimals)
+- 🧪 **Block Testing**: Test specific blocks to verify event detection
+- 🛡️ **Robust Error Handling**: Comprehensive logging and error recovery
+- ⚡ **Modern Stack**: Built with Viem for optimal performance
 
-### Prerequisites
+## 🏗️ **Repository Structure**
 
-- Python 3.8 or higher
+```
+YieldBot/
+├── 📁 src/                          # Main application code
+│   ├── 🔧 index.js                  # Application entry point
+│   ├── ⛓️ blockchain-monitor.js      # Blockchain monitoring with Viem
+│   ├── 🤖 discord-bot.js            # Discord integration
+│   ├── ⚙️ config.js                 # Configuration management
+│   ├── 🧪 test.js                   # Comprehensive test suite
+│   └── 🔍 test-block.js             # Block-specific testing tool
+├── 🐍 Python Implementation/        # Alternative Python version
+│   ├── 📄 main.py                   # Python main application
+│   ├── ⛓️ blockchain_monitor.py     # Python blockchain monitoring
+│   ├── 🤖 discord_bot.py            # Python Discord bot
+│   └── ⚙️ config.py                 # Python configuration
+├── 🚀 Deployment Files/
+│   ├── 🐳 Dockerfile                # Docker configuration
+│   ├── 📦 docker-compose.yml        # Docker Compose setup
+│   ├── 🚂 Procfile                  # Railway/Heroku deployment
+│   ├── ⚙️ railway.json              # Railway configuration
+│   └── 🐍 runtime.txt               # Python version specification
+├── 📋 Configuration/
+│   ├── 📝 .env.example              # Environment variables template
+│   ├── 📄 config.example.env        # Python config template
+│   ├── 📦 package.json              # Node.js dependencies
+│   ├── 🐍 requirements.txt          # Python dependencies
+│   └── 🚫 .gitignore                # Git ignore rules
+└── 📚 Documentation/
+    └── 📖 README.md                 # This file
+```
+
+## 🚀 **Quick Start Guide**
+
+### **Prerequisites**
+- Node.js 18+ (for Viem version) OR Python 3.8+ (for Python version)
 - Discord bot token
-- RPC endpoint (Infura, Alchemy, or your own node)
-- Contract addresses for RewardsManager and slvlUSD
+- Ethereum RPC endpoint (Infura, Alchemy, etc.)
 
-### Installation
+### **Option 1: Viem Version (Recommended)**
 
-1. **Clone the repository** (or create the files):
-   ```bash
-   git clone <your-repo> # or create the directory manually
-   cd YieldBot
-   ```
+#### **1. Install Dependencies**
+```bash
+npm install
+```
 
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+#### **2. Configure Environment**
+```bash
+cp .env.example .env
+```
 
-3. **Create environment file**:
-   ```bash
-   cp config.example.env .env
-   ```
+Edit `.env` with your values:
+```env
+# Discord Bot Configuration
+DISCORD_BOT_TOKEN=your_discord_bot_token_here
+DISCORD_CHANNEL_ID=your_channel_id_here
 
-4. **Configure environment variables** in `.env`:
-   ```env
-   # Discord Bot Configuration
-   DISCORD_BOT_TOKEN=your_discord_bot_token_here
-   DISCORD_CHANNEL_ID=your_channel_id_here
+# Blockchain Configuration
+RPC_URL=https://your-rpc-endpoint.com
+REWARDS_MANAGER_ADDRESS=0xBD05B8B22fE4ccf093a6206C63Cc39f02345E0DA
+SLVLUSD_ADDRESS=your_slvlusd_address_here
 
-   # Blockchain Configuration
-   RPC_URL=https://your-rpc-endpoint.com
-   REWARDS_MANAGER_ADDRESS=0xBD05B8B22fE4ccf093a6206C63Cc39f02345E0DA
-   SLVLUSD_ADDRESS=0x...
+# Network Configuration
+CHAIN_ID=1
+BLOCK_CONFIRMATIONS=3
+POLL_INTERVAL=30
+```
 
-   # Network Configuration
-   CHAIN_ID=1  # 1 for Ethereum mainnet
+#### **3. Test Your Setup**
+```bash
+# Run comprehensive tests
+npm test
 
-   # Monitoring Configuration
-   BLOCK_CONFIRMATIONS=3
-   POLL_INTERVAL=30  # seconds
-   ```
+# Test specific block (example from Etherscan)
+npm run test-block 23174914
+```
 
-### Discord Bot Setup
+#### **4. Start the Bot**
+```bash
+npm start
+```
 
-1. **Create a Discord Application**:
-   - Go to https://discord.com/developers/applications
-   - Click "New Application"
-   - Give it a name (e.g., "YieldBot")
+### **Option 2: Python Version**
 
-2. **Create a Bot**:
-   - Go to the "Bot" section
-   - Click "Add Bot"
-   - Copy the bot token and add it to your `.env` file
+#### **1. Install Dependencies**
+```bash
+pip install -r requirements.txt
+```
 
-3. **Set Bot Permissions**:
-   - In the "Bot" section, enable these permissions:
-     - Send Messages
-     - Embed Links
-     - Read Message History
-   - Generate an invite link in the "OAuth2" > "URL Generator" section
+#### **2. Configure Environment**
+```bash
+cp config.example.env .env
+# Edit .env with your values (same format as above)
+```
 
-4. **Invite Bot to Server**:
-   - Use the generated invite link
-   - Select your Discord server
-   - Authorize the bot
+#### **3. Start the Bot**
+```bash
+python main.py
+```
 
-5. **Get Channel ID**:
-   - Enable Developer Mode in Discord (User Settings > Advanced > Developer Mode)
-   - Right-click on the target channel
-   - Click "Copy ID"
-   - Add this ID to your `.env` file
+## 🔧 **Discord Bot Setup**
 
-### Contract Addresses
+### **1. Create Discord Application**
+1. Go to https://discord.com/developers/applications
+2. Click "New Application"
+3. Name it "YieldBot"
 
-The bot is pre-configured to monitor:
-- **RewardsManager**: `0xBD05B8B22fE4ccf093a6206C63Cc39f02345E0DA` (handles reward distributions)
-- **slvlUSD**: Set this to your slvlUSD contract address
+### **2. Create Bot**
+1. Go to "Bot" section
+2. Click "Add Bot"
+3. Copy the bot token → add to `.env`
 
-The bot specifically monitors for:
-- **Method ID**: `0x6a761202` (yield distribution function calls)
-- **Event**: `Rewarded(address asset, address to, uint256 amount)` events
+### **3. Set Permissions**
+Required bot permissions:
+- ✅ Send Messages
+- ✅ Embed Links
+- ✅ Read Message History
 
-## Usage
+### **4. Invite Bot to Server**
+1. Go to "OAuth2" → "URL Generator"
+2. Select "bot" scope
+3. Select required permissions
+4. Use generated invite link
 
-### Running the Bot
+### **5. Get Channel ID**
+1. Enable Developer Mode in Discord (User Settings → Advanced)
+2. Right-click target channel → "Copy ID"
+3. Add to `.env`
 
-1. **Test your configuration** (recommended):
-   ```bash
-   python utils.py
-   ```
-   This will run comprehensive tests to ensure everything is configured correctly.
+## 🧪 **Testing & Verification**
 
-2. **Start the bot**:
-   ```bash
-   python main.py
-   ```
+### **Test Known Event**
+Test with the actual yield distribution from your screenshot:
+```bash
+npm run test-block 23174914
+```
 
-The bot will:
-- Connect to Discord
-- Start monitoring the blockchain
-- Send notifications when yield distributions are detected
+**Expected Output:**
+```
+🎯 Found yield distribution transaction: 0x855d6b3b6a...
+✅ Found Rewarded event with amount: 31,338.00 USDC
+🏆 DETECTED YIELD DISTRIBUTIONS:
+1. Transaction: 0x855d6b3b6a...
+   💰 Amount: 31,338.00 USDC
+   🏛️ RewardsManager: ✅
+   📝 Events (1):
+      1. Rewarded: 31,338.00 USDC
+         Asset: 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+         Recipient: 0xdf95bb71581b224bd42eb19ceaff5e92816e181e
+```
 
-### Bot Commands
+### **Comprehensive Testing**
+```bash
+npm test
+```
 
-In Discord, you can use these commands:
+Tests:
+- ✅ Configuration validation
+- ✅ Blockchain connectivity
+- ✅ Discord connectivity
+- ✅ Event signature calculation
+- ✅ Block processing
 
-- `!status` - Check bot status
+## 📱 **Discord Notification Format**
+
+When yield is distributed, you'll receive:
+
+```
+🏆 Rewarded Event Detected!
+Protocol yield distribution via Rewarded event
+
+💰 Amount: 31,338.00 USDC
+📦 Block Number: 23,174,914
+🔗 Transaction Hash: [View on Explorer](https://etherscan.io/tx/0x...)
+
+ℹ️ Details: 🏛️ RewardsManager method 0x6a761202 executed • 💰 Asset: 0xa0b... • 👤 Recipient: 0xdf9...
+
+YieldBot • Monitoring Protocol Yield Distributions
+```
+
+## 🎮 **Bot Commands**
+
+In Discord:
+- `!status` - Check bot status and connection
 - `!test` - Send a test notification
 
-### Monitoring
+## 📊 **Monitoring Logic**
 
-The bot will:
-- Check for new blocks every 30 seconds (configurable)
-- Wait for 3 block confirmations before processing (configurable)
-- Monitor transactions to RewardsManager contract (0xBD05B8B22fE4ccf093a6206C63Cc39f02345E0DA)
-- Detect method calls with ID 0x6a761202
-- Parse Rewarded events and extract yield amounts
-- Send Discord notifications with proper token formatting (USDC, ETH, etc.)
+### **Detection Process:**
+1. **Poll Blockchain**: Every 30 seconds (configurable)
+2. **Check Transactions**: Look for calls to `0xBD05B8B22fE4ccf093a6206C63Cc39f02345E0DA`
+3. **Verify Method**: Confirm method ID is `0x6a761202`
+4. **Parse Events**: Extract `Rewarded` events from transaction logs
+5. **Format Amount**: Convert amounts based on token (USDC: 6 decimals, ETH: 18 decimals)
+6. **Send Notification**: Post rich embed to Discord
 
-## Configuration Options
+### **What Gets Detected:**
+- ✅ Treasury multisig calls `reward` on RewardsManager (`0x6a761202`)
+- ✅ `Rewarded(address asset, address to, uint256 amount)` events
+- ✅ Yield distribution amounts (properly formatted)
+- ✅ Asset and recipient addresses
+
+## 🚀 **Deployment Options**
+
+### **Local Machine**
+```bash
+npm start  # Keep terminal open
+```
+
+### **VPS/Cloud Server**
+```bash
+# Use screen/tmux for persistent sessions
+screen -S yieldbot
+npm start
+# Ctrl+A, D to detach
+```
+
+### **Railway (Free)**
+1. Connect GitHub repo to Railway
+2. Set environment variables in Railway dashboard
+3. Deploy automatically using existing `Procfile`
+
+### **Docker**
+```bash
+docker-compose up -d
+```
+
+### **Heroku**
+Uses existing `Procfile` configuration
+
+## 🔧 **Configuration Options**
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DISCORD_BOT_TOKEN` | Discord bot token | Required |
 | `DISCORD_CHANNEL_ID` | Target Discord channel ID | Required |
-| `RPC_URL` | Blockchain RPC endpoint | Required |
-| `REWARDS_MANAGER_ADDRESS` | RewardsManager contract address | Required |
-| `SLVLUSD_ADDRESS` | slvlUSD contract address | Required |
-| `CHAIN_ID` | Blockchain network ID | 1 |
-| `BLOCK_CONFIRMATIONS` | Blocks to wait for confirmation | 3 |
-| `POLL_INTERVAL` | Seconds between blockchain polls | 30 |
+| `RPC_URL` | Ethereum RPC endpoint | Required |
+| `REWARDS_MANAGER_ADDRESS` | RewardsManager contract | `0xBD05B...` |
+| `SLVLUSD_ADDRESS` | slvlUSD contract address | Optional |
+| `CHAIN_ID` | Blockchain network ID | `1` |
+| `BLOCK_CONFIRMATIONS` | Blocks to wait for confirmation | `3` |
+| `POLL_INTERVAL` | Seconds between blockchain polls | `30` |
 
-## Notification Format
+## 🐛 **Troubleshooting**
 
-When a yield distribution is detected, the bot sends a rich embedded message containing:
+### **Bot Not Starting**
+- ✅ Check `.env` file exists and has correct values
+- ✅ Verify Discord bot token is valid
+- ✅ Ensure RPC URL is accessible
 
-- 💰 **Amount**: The amount of tokens distributed
-- 📦 **Block Number**: The block where the transaction occurred
-- 🔗 **Transaction Hash**: Link to view the transaction on Etherscan
-- ℹ️ **Details**: Description of the yield distribution process
+### **No Notifications**
+- ✅ Verify Discord channel ID is correct
+- ✅ Check bot has permissions in target channel
+- ✅ Test with `npm run test-block 23174914`
 
-## Troubleshooting
+### **Connection Issues**
+- ✅ Check RPC endpoint rate limits
+- ✅ Verify network connectivity
+- ✅ Run `npm test` for diagnostics
 
-### Common Issues
+## 📝 **Logs**
 
-1. **Bot not connecting to Discord**:
-   - Verify your bot token is correct
-   - Ensure the bot has proper permissions
-   - Check that the channel ID is correct
+Bot creates detailed logs in:
+- **Console**: Real-time monitoring output
+- **yieldbot.log**: Persistent log file (Python version)
 
-2. **Not detecting yield distributions**:
-   - Verify contract addresses are correct
-   - Check RPC endpoint connectivity
-   - Ensure the contracts are on the correct network
-
-3. **Missing notifications**:
-   - Check logs for errors
-   - Verify the bot has permission to send messages
-   - Ensure the target channel exists
-
-### Logs
-
-The bot logs to both console and `yieldbot.log` file. Check logs for detailed error information.
-
-### Testing
-
-Use the testing utility to diagnose issues:
-
-```bash
-python utils.py
+**Success Indicators:**
+```
+✅ Found method 0x6a761202 call to RewardsManager
+✅ Found Rewarded event with amount: 31,338.00 USDC
+📤 Yield notification sent to channel
 ```
 
-This will test:
-- Environment configuration
-- Contract address validation
-- Blockchain connectivity
-- Discord connectivity
-- Notification sending
+## 🔐 **Security**
 
-## Development
+- 🛡️ **Read-Only**: Bot only reads blockchain data, never writes
+- 🔒 **Environment Variables**: Sensitive data protected by `.gitignore`
+- 🌐 **RPC Only**: Uses standard Ethereum RPC endpoints
+- 👤 **Discord Permissions**: Minimal required permissions only
 
-### Project Structure
+## 📄 **License**
 
-```
-YieldBot/
-├── main.py                 # Main application entry point
-├── discord_bot.py          # Discord bot functionality
-├── blockchain_monitor.py   # Blockchain monitoring
-├── config.py              # Configuration management
-├── utils.py               # Testing and utilities
-├── requirements.txt       # Python dependencies
-├── config.example.env     # Example environment file
-└── README.md             # This file
-```
+MIT License - Open source and free to use.
 
-### Adding Features
+---
 
-To extend the bot:
+## 🎯 **Summary**
 
-1. **New Event Types**: Add event signatures to `blockchain_monitor.py`
-2. **Message Formatting**: Modify `discord_bot.py` notification methods
-3. **Additional Commands**: Add commands to the `YieldBot` class
-4. **Configuration**: Add new settings to `config.py`
+YieldBot is now ready to monitor your RewardsManager contract (`0xBD05B8B22fE4ccf093a6206C63Cc39f02345E0DA`) for yield distributions. When the treasury multisig calls the reward function (`0x6a761202`), your Discord server will be instantly notified with beautiful, detailed messages showing the yield amount and transaction details.
 
-### Event Detection
-
-The bot detects yield distributions by:
-
-1. Monitoring transactions to target contracts
-2. Analyzing transaction logs for relevant events
-3. Decoding transfer amounts and event data
-4. Filtering for yield-related activities
-
-## Security Considerations
-
-- Keep your Discord bot token secure
-- Use read-only RPC endpoints
-- The bot only reads blockchain data, never writes
-- Consider rate limiting for high-traffic networks
-
-## Support
-
-For issues or questions:
-
-1. Check the logs for error details
-2. Run the test utility to diagnose problems
-3. Verify all configuration is correct
-4. Ensure contract addresses are up to date
-
-## License
-
-This project is open source and available under the MIT License.
+**Ready to deploy? Choose your preferred version (Viem or Python) and follow the Quick Start Guide above!** 🚀
