@@ -19,7 +19,8 @@
     "@types/node": "^22.7.4"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "18.x",
+    "npm": ">=8.0.0"
   },
   "keywords": [
     "ethereum",

@@ -1,0 +1,12 @@
+# Ignore Python implementation folder
+Python Implementation/
+__pycache__/
+*.py
+requirements.txt
+*.log
+
+# Ignore other non-Node.js files
+.git/
+.gitignore
+README.md
+RUN-GUIDE.md
