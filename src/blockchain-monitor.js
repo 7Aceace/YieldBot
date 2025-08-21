@@ -123,12 +123,12 @@ export class BlockchainMonitor {
               const dataContainsUSDC = log.data.toLowerCase().includes(config.USDC_ADDRESS.slice(2).toLowerCase());
               
               if (dataContainsUSDC || (assetAddress && assetAddress.toLowerCase() === config.USDC_ADDRESS.toLowerCase())) {
-                // USDC has 6 decimals
+                // USDC has 6 decimals, display as USD
                 const amountFormatted = formatUnits(amountWei, 6);
                 amountDisplay = `${parseFloat(amountFormatted).toLocaleString('en-US', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2
-                })} USDC`;
+                })} USD`;
               } else {
                 // Default to 18 decimals for other tokens
                 const amountFormatted = formatUnits(amountWei, 18);

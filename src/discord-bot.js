@@ -78,7 +78,7 @@ export class DiscordBot {
       
       if (rewardedEvents.length > 0) {
         title = '🏆 Rewarded Event Detected!';
-        description = 'Protocol yield distribution via Rewarded event';
+        description = 'SlvlUSD yield distribution ';
         color = 0xffd700; // Gold
       } else if (transactionType === 'yield_distribution_call') {
         title = '🎉 Yield Distribution Detected!';
@@ -136,6 +136,8 @@ export class DiscordBot {
       if (detailsParts.length === 0) {
         detailsParts.push('Protocol yield distribution event detected');
       }
+      // Append weekly breakdown link
+      detailsParts.push('For weekly breakdown: https://app.level.money/transparency?tab=apy');
       
       embed.addFields({
         name: 'ℹ️ Details',
