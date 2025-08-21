@@ -14,4 +14,4 @@ RUN useradd --create-home --shell /bin/bash yieldbot
 USER yieldbot
 
 # Run the bot
-CMD ["python", "main.py"]
+CMD ["npm", "start"]
