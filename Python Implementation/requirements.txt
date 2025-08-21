@@ -1,7 +1,0 @@
-discord.py==2.3.2
-web3==6.11.3
-python-dotenv==1.0.0
-asyncio==3.4.3
-logging==0.4.9.6
-requests==2.31.0
-eth-abi==4.2.1
