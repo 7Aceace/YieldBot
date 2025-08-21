@@ -66,7 +66,8 @@ export class BlockchainMonitor {
       events: [],
       transactionType: null,
       involvesRewardsManager: false,
-      involvesSlvlusd: false
+      involvesSlvlusd: false,
+      foundRewarded: false
     };
     
     if (!receipt || !receipt.logs) {
@@ -154,6 +155,8 @@ export class BlockchainMonitor {
                 asset: assetAddress,
                 recipient: recipientAddress
               });
+              // Strict flag so we only notify when a Rewarded event is present
+              result.foundRewarded = true;
               
               console.log(`✅ Found Rewarded event with amount: ${amountDisplay}`);
             }
@@ -227,7 +230,8 @@ export class BlockchainMonitor {
           if (receipt) {
             const analysis = this.analyzeTransactionLogs(receipt);
             
-            if (analysis.isYieldDistribution) {
+            // Notify only when a Rewarded event is present
+            if (analysis.foundRewarded) {
               const yieldDistribution = {
                 transactionHash: tx.hash,
                 blockNumber: Number(blockNumber),
