@@ -224,7 +224,7 @@ export class BlockchainMonitor {
       for (const tx of block.transactions) {
         
         if (this.isYieldDistributionTransaction(tx)) {
-          console.log(`🎯 Found yield distribution transaction: ${tx.hash}`);
+          console.log(`🧐 Found candidate 0x6a761202 call: ${tx.hash}`);
           const receipt = await this.getTransactionReceipt(tx.hash);
           
           if (receipt) {
