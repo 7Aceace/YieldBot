@@ -39,24 +39,15 @@ export class BlockchainMonitor {
   
   isYieldDistributionTransaction(tx) {
     if (!tx.to || !tx.input) return false;
-    
     const methodId = tx.input.slice(0, 10); // First 4 bytes (0x + 8 chars)
-    
-    // Check if method ID matches 0x6a761202 (regardless of target contract)
-    // This catches both direct calls and proxy/multicall patterns
-    if (methodId === config.YIELD_DISTRIBUTION_METHOD) {
-      return true;
-    }
-    
-    // Original logic: direct calls to RewardsManager
     const toAddress = tx.to.toLowerCase();
-    const rewardsManager = config.REWARDS_MANAGER_ADDRESS.toLowerCase();
-    
-    if (toAddress === rewardsManager && methodId === config.YIELD_DISTRIBUTION_METHOD) {
-      return true;
-    }
-    
-    return false;
+    const requiredTo = config.INTERACTION_TO_ADDRESS?.toLowerCase();
+    // Candidate only if:
+    // - Method ID matches 0x6a761202
+    // - AND the tx 'to' equals the specified interaction address (proxy/multicall)
+    if (methodId !== config.YIELD_DISTRIBUTION_METHOD) return false;
+    if (requiredTo && toAddress !== requiredTo) return false;
+    return true;
   }
   
   analyzeTransactionLogs(receipt) {

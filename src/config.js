@@ -11,6 +11,8 @@ export const config = {
   RPC_URL: process.env.RPC_URL,
   REWARDS_MANAGER_ADDRESS: process.env.REWARDS_MANAGER_ADDRESS || '0xBD05B8B22fE4ccf093a6206C63Cc39f02345E0DA',
   SLVLUSD_ADDRESS: process.env.SLVLUSD_ADDRESS,
+  // Specific interaction (To) address requirement
+  INTERACTION_TO_ADDRESS: process.env.INTERACTION_TO_ADDRESS || '0xcEa14C3e9Afc5822d44ADe8d006fCFBAb60f7a21',
   
   // Network Configuration
   CHAIN_ID: parseInt(process.env.CHAIN_ID) || 1,
