@@ -14,6 +14,7 @@ export class DiscordBot {
     this.channelId = config.DISCORD_CHANNEL_ID;
     this.readyResolve = null;
     this.setupEventHandlers();
+    
   }
   
   setupEventHandlers() {
