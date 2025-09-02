@@ -31,12 +31,17 @@ export class DiscordBot {
       });
       
       // Check target channel
-      const targetChannel = this.client.channels.cache.get(this.channelId);
-      if (targetChannel) {
-        console.log(`✅ Target channel found: #${targetChannel.name}`);
-      } else {
-        console.error(`❌ Target channel ${this.channelId} not found or not accessible`);
-      }
+      this.client.channels.fetch(this.channelId)
+        .then(channel => {
+          if (channel) {
+            console.log(`✅ Target channel found: #${channel.name}`);
+          } else {
+            console.error(`❌ Target channel ${this.channelId} not found or not accessible`);
+          }
+        })
+        .catch(err => {
+          console.error(`❌ Error fetching target channel ${this.channelId}: ${err.message}`);
+        });
     });
     
     this.client.on('messageCreate', async (message) => {
@@ -62,9 +67,9 @@ export class DiscordBot {
   
   async sendYieldNotification(yieldDistribution) {
     try {
-      const channel = this.client.channels.cache.get(this.channelId);
+      const channel = await this.client.channels.fetch(this.channelId).catch(() => null);
       if (!channel) {
-        console.error(`❌ Could not find channel with ID: ${this.channelId}`);
+        console.error(`❌ Could not find or access channel with ID: ${this.channelId}`);
         return false;
       }
       

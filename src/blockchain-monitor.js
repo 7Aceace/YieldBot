@@ -41,7 +41,7 @@ export class BlockchainMonitor {
     if (!tx.to || !tx.input) return false;
     const methodId = tx.input.slice(0, 10); // First 4 bytes (0x + 8 chars)
     const toAddress = tx.to.toLowerCase();
-    const requiredTo = config.INTERACTION_TO_ADDRESS?.toLowerCase();
+    const requiredTo = config.INTERACTION_TO_ADDRESS ? config.INTERACTION_TO_ADDRESS.toLowerCase() : null;
     // Candidate only if:
     // - Method ID matches 0x6a761202
     // - AND the tx 'to' equals the specified interaction address (proxy/multicall)
@@ -68,7 +68,7 @@ export class BlockchainMonitor {
     for (const log of receipt.logs) {
       const logAddress = log.address.toLowerCase();
       const rewardsManager = config.REWARDS_MANAGER_ADDRESS.toLowerCase();
-      const slvlusd = config.SLVLUSD_ADDRESS?.toLowerCase();
+      const slvlusd = config.SLVLUSD_ADDRESS ? config.SLVLUSD_ADDRESS.toLowerCase() : null;
       
       // Track contract involvement
       if (logAddress === rewardsManager) {

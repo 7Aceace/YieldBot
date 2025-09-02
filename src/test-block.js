@@ -1,5 +1,6 @@
 import { config, validateConfig } from './config.js';
 import { BlockchainMonitor } from './blockchain-monitor.js';
+import { DiscordBot } from './discord-bot.js';
 
 /**
  * Test script to check a specific block for yield distribution events
@@ -8,6 +9,7 @@ import { BlockchainMonitor } from './blockchain-monitor.js';
  */
 
 async function testSpecificBlock(blockNumber) {
+  let bot = null;
   try {
     console.log('🧪 YieldBot Block Testing Tool');
     console.log('='.repeat(50));
@@ -67,6 +69,8 @@ async function testSpecificBlock(blockNumber) {
       // Send Discord notifications for detected distributions
       console.log('\n📱 Testing Discord notifications...');
       try {
+        // Initialize Discord bot
+        bot = new DiscordBot();
         await bot.start();
         console.log('✅ Connected to Discord');
         
