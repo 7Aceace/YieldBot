@@ -7,8 +7,16 @@ export const config = {
   DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
   DISCORD_CHANNEL_ID: process.env.DISCORD_CHANNEL_ID,
   
-  // Blockchain Configuration
+  // Blockchain Configuration  
   RPC_URL: process.env.RPC_URL,
+  // Multiple RPC endpoints for redundancy
+  RPC_URLS: [
+    process.env.RPC_URL,
+    process.env.RPC_URL_BACKUP_1 || 'https://ethereum-rpc.publicnode.com',
+    process.env.RPC_URL_BACKUP_2 || 'https://rpc.ankr.com/eth',
+    process.env.RPC_URL_BACKUP_3 || 'https://eth.llamarpc.com',
+    process.env.RPC_URL_BACKUP_4 || 'https://ethereum.blockpi.network/v1/rpc/public'
+  ].filter(Boolean),
   REWARDS_MANAGER_ADDRESS: process.env.REWARDS_MANAGER_ADDRESS || '0xBD05B8B22fE4ccf093a6206C63Cc39f02345E0DA',
   SLVLUSD_ADDRESS: process.env.SLVLUSD_ADDRESS,
   // Specific interaction (To) address requirement
@@ -19,7 +27,8 @@ export const config = {
   
   // Monitoring Configuration
   BLOCK_CONFIRMATIONS: parseInt(process.env.BLOCK_CONFIRMATIONS) || 3,
-  POLL_INTERVAL: parseInt(process.env.POLL_INTERVAL) || 30,
+  POLL_INTERVAL: parseInt(process.env.POLL_INTERVAL) || 45, // Increased from 30 to reduce rate limiting
+  POLL_INTERVAL_BACKOFF: parseInt(process.env.POLL_INTERVAL_BACKOFF) || 120, // Backoff interval on rate limit
   
   // Event Configuration
   YIELD_DISTRIBUTION_METHOD: '0x6a761202',

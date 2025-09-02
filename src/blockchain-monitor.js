@@ -1,13 +1,22 @@
-import { createPublicClient, http, parseAbiItem, formatUnits, keccak256, toHex } from 'viem';
+import { createPublicClient, http, parseAbiItem, formatUnits, keccak256, toHex, fallback } from 'viem';
 import { mainnet } from 'viem/chains';
 import { config } from './config.js';
 
 export class BlockchainMonitor {
   constructor() {
+    // Create fallback transport with multiple RPC providers
+    const transports = config.RPC_URLS.map(url => http(url));
+    
     this.client = createPublicClient({
       chain: mainnet,
-      transport: http(config.RPC_URL)
+      transport: fallback(transports, {
+        rank: false, // Don't rank by speed, use in order
+        retryCount: 2,
+        retryDelay: 1000
+      })
     });
+    
+    console.log(`🌐 Configured ${config.RPC_URLS.length} RPC endpoints for redundancy`);
     
     this.lastProcessedBlock = null;
     
@@ -284,6 +293,13 @@ export class BlockchainMonitor {
         }
       } catch (error) {
         console.error(`❌ Error in monitoring loop: ${error.message}`);
+        
+        // Check if it's a rate limiting error
+        if (error.message.includes('rate-limited') || error.message.includes('429')) {
+          console.warn(`🐌 Rate limited! Using backoff interval of ${config.POLL_INTERVAL_BACKOFF}s`);
+          setTimeout(monitor, config.POLL_INTERVAL_BACKOFF * 1000);
+          return;
+        }
       }
       
       setTimeout(monitor, config.POLL_INTERVAL * 1000);
