@@ -12,6 +12,7 @@ export class DiscordBot {
     });
     
     this.channelId = config.DISCORD_CHANNEL_ID;
+    this.readyResolve = null;
     this.setupEventHandlers();
   }
   
@@ -38,9 +39,19 @@ export class DiscordBot {
           } else {
             console.error(`❌ Target channel ${this.channelId} not found or not accessible`);
           }
+          
+          // Resolve the start promise after channel verification
+          if (this.readyResolve) {
+            this.readyResolve();
+          }
         })
         .catch(err => {
           console.error(`❌ Error fetching target channel ${this.channelId}: ${err.message}`);
+          
+          // Still resolve even if channel fetch fails
+          if (this.readyResolve) {
+            this.readyResolve();
+          }
         });
     });
     
@@ -56,7 +67,18 @@ export class DiscordBot {
   }
   
   async start() {
-    await this.client.login(config.DISCORD_BOT_TOKEN);
+    return new Promise((resolve, reject) => {
+      // Store the resolve function so the ready handler can call it
+      this.readyResolve = resolve;
+      
+      // Set up error handling
+      this.client.once('error', (error) => {
+        reject(error);
+      });
+      
+      // Start the login process
+      this.client.login(config.DISCORD_BOT_TOKEN).catch(reject);
+    });
   }
   
   async stop() {
